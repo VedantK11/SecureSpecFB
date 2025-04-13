@@ -160,7 +160,7 @@ class PACKET {
         send_both_tlb = 0;
 	send_both_cache = 0;
 	late_pref = 0;
-
+    is_speculative = 0;
 	pf_metadata = 0;
 
         returned = 0;
@@ -340,7 +340,6 @@ class CORE_BUFFER {
 
 
     ooo_model_instr *entry;
-     //Sumon (classification of speculative instruction): array of pointers to instructions present in ROB. Used for Shadow buffer.
     ooo_model_instr **entry_pointer;  //this points to an array of ooo_model_instr type pointers
 
 
@@ -369,6 +368,7 @@ class CORE_BUFFER {
 
 
         entry = new ooo_model_instr[SIZE];
+        entry_pointer = new ooo_model_instr*[SIZE];
     };
 
     // destructor

@@ -18,6 +18,8 @@ extern uint64_t inst_total_loads;
 
 using namespace std;
 
+#define SPEC_LFB
+
 // CORE PROCESSOR
 #define FETCH_WIDTH 6
 #define DECODE_WIDTH 6
@@ -69,7 +71,6 @@ class O3_CPU {
     CORE_BUFFER DECODE_BUFFER{"DECODE_BUFFER", DECODE_WIDTH*3};
     CORE_BUFFER ROB{"ROB", ROB_SIZE};
 
-    //Sumon (classification of speculative instruction) 
     CORE_BUFFER SHADOW_BUFFER{"SHADOW_BUFFER", ROB_SIZE};
 
     LOAD_STORE_QUEUE LQ{"LQ", LQ_SIZE}, SQ{"SQ", SQ_SIZE};
@@ -236,9 +237,8 @@ class O3_CPU {
     uint32_t  add_to_rob(ooo_model_instr *arch_instr),
               check_rob(uint64_t instr_id);
 
-    //sumon
         uint32_t add_to_shadow_buffer(ooo_model_instr *arch_instr),
-        retire_shadow_buffer();
+        retire_shadow_buffer(int rob_index);
 
 	uint32_t add_to_ifetch_buffer(ooo_model_instr *arch_instr);
 	uint32_t add_to_decode_buffer(ooo_model_instr *arch_instr);
@@ -259,6 +259,9 @@ class O3_CPU {
      int prefetch_code_line(uint64_t pf_v_addr);
 
 void fill_btb(uint64_t trigger, uint64_t target);
+void mark_non_spec();
+void forward_merged_packet();
+void mark_safe(int);
 
 };
 

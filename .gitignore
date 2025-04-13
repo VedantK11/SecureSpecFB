@@ -27,3 +27,8 @@ absolute.options
 
 .vscode/
 **/.DS_Store
+
+*.csv
+*.txt
+*.sh
+*.xz

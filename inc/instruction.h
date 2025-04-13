@@ -106,14 +106,14 @@ class ooo_model_instr {
              producer_id,
              translated_cycle,
              fetched_cycle,
+             is_safe,
              execute_begin_cycle,
              retired_cycle,
              event_cycle,
 	     stall_begin_cycle,	//Neelu: Adding to count number of stall cycles in ROB
 	     load_stall_begin_cycle,
 	     stall_begin_rob_occupancy,	//Neelu: Adding to capture ROB occupancy at stall start.
-          //Sumon (classification of speculative instruction): associates an instruction with the youngest shadow casting instruction while it is dispatched. 
-        youngest_shadow_casting_instr_id; // Sumon: stores the instr_id(works as a timestamp) of the youngest instruction in the shadow buffer at the time of dispatching this instruction
+        youngest_shadow_casting_instr_id;
         
     uint8_t speculative_bit; // --> 1 represents speculative instruction
 
@@ -188,6 +188,7 @@ class ooo_model_instr {
         producer_id = 0;
         translated_cycle = 0;
         fetched_cycle = 0;
+        is_safe = 0;
         execute_begin_cycle = 0;
         retired_cycle = 0;
         event_cycle = 0;

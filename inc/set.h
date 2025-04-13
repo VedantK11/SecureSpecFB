@@ -164,6 +164,25 @@ public:
 		setbit (x);
 	}
 
+	void remove(TYPE x){
+
+		if(!card)
+			assert(0);
+
+		int i,j;
+
+		for(i = 0; i < card; i++){
+			if(data.values[i] == x)
+				break;
+		}
+		
+		if(i != card){
+		for(j = i+1; j < card; j++)
+			data.values[j-1] = data.values[j];
+		card--; //reduce the card size by 1
+		}
+		
+	} 
 	// search the set for a value
 
 	bool search (TYPE x) {

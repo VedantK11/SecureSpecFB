@@ -11,6 +11,7 @@ extern uint32_t PAGE_TABLE_LATENCY, SWAP_LATENCY;
 
 //naman
 #define DEBUG_INSTRUCTION -1
+#define INSTRUCTION -1
 
 // CACHE TYPE
 #define IS_ITLB 0

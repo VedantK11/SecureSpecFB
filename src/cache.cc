@@ -418,7 +418,7 @@ void CACHE::handle_fill()
                 if (lower_level->get_occupancy(2, block[set][way].address) == lower_level->get_size(2, block[set][way].address)) {
                     //naman nish
                     //WQ_debug
-                    if(MSHR.entry[mshr_index].instr_id == DEBUG_INSTRUCTION)
+                    if(MSHR.entry[mshr_index].instr_id == DEBUG_INSTRUCTION && MSHR.entry[mshr_index].instruction == INSTRUCTION)
                     {
                         cout<<"WQ is full instr_id " <<DEBUG_INSTRUCTION<< " mshr_index: " << mshr_index << " cache level: " << NAME << endl;
                     }
@@ -850,7 +850,7 @@ if (writeback_cpu == NUM_CPUS)
 
             //naman nish
             //WQ_debug
-            if (WQ.entry[index].instr_id == DEBUG_INSTRUCTION) {  
+            if (WQ.entry[index].instr_id == DEBUG_INSTRUCTION && WQ.entry[index].instruction == INSTRUCTION) {  
                     cout << "[" << NAME << "] " << __func__ << " type: " << +WQ.entry[index].type << " hit";
                     cout << " instr_id: " << WQ.entry[index].instr_id << " address: " << hex << WQ.entry[index].address;
                     cout << " full_addr: " << WQ.entry[index].full_addr << dec;
@@ -896,7 +896,7 @@ if (writeback_cpu == NUM_CPUS)
 
             //naman nish
             // WQ_debug
-            if (WQ.entry[index].instr_id == DEBUG_INSTRUCTION) {
+            if (WQ.entry[index].instr_id == DEBUG_INSTRUCTION && WQ.entry[index].instruction == INSTRUCTION) {
                     cout << "[" << NAME << "] " << __func__ << " type: " << +WQ.entry[index].type << " miss";
                     cout << " instr_id: " << WQ.entry[index].instr_id << " address: " << hex << WQ.entry[index].address;
                     cout << " full_addr: " << WQ.entry[index].full_addr << dec;
@@ -1607,7 +1607,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                 //naman nish
                 
                 //WQ_debug
-                if(RQ.entry[index].instr_id == DEBUG_INSTRUCTION) {
+                if(RQ.entry[index].instr_id == DEBUG_INSTRUCTION && RQ.entry[index].instruction == INSTRUCTION) {
                     cout << "[" << NAME << "] " << __func__ << " read hit";
                     cout << " instr_id: " << RQ.entry[index].instr_id << " address: " << hex << RQ.entry[index].address;
                     cout << " full_addr: " << RQ.entry[index].full_addr;
@@ -1997,7 +1997,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                     
                     //naman nish
                     //WQ_debug
-                    if(RQ.entry[index].instr_id == DEBUG_INSTRUCTION){
+                    if(RQ.entry[index].instr_id == DEBUG_INSTRUCTION && RQ.entry[index].instruction == INSTRUCTION){
                     cout << "[" << NAME << "] " << __func__ << " read miss";
                     cout << " instr_id: " << RQ.entry[index].instr_id << " address: " << hex << RQ.entry[index].address;
                     cout << " full_addr: " << RQ.entry[index].full_addr;
@@ -2011,7 +2011,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                     int mshr_index = check_nonfifo_queue(&MSHR, &RQ.entry[index],false); //@Vishal: Updated from check_mshr
 
                     //naman nish
-                    if(RQ.entry[index].instr_id == DEBUG_INSTRUCTION)
+                    if(RQ.entry[index].instr_id == DEBUG_INSTRUCTION && RQ.entry[index].instruction == INSTRUCTION)
                     {
                         cout << NAME << " mshr_index: " << mshr_index << endl;
                     }
@@ -2208,7 +2208,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                                             cout << " merged rob_index: " << RQ.entry[index].rob_index << " instr_id: " << RQ.entry[index].instr_id << " lq_index: " << RQ.entry[index].lq_index << endl; });
                                     
                                     //nmaan nish
-                                    if(RQ.entry[index].instr_id == DEBUG_INSTRUCTION) {
+                                    if(RQ.entry[index].instr_id == DEBUG_INSTRUCTION && RQ.entry[index].instruction == INSTRUCTION) {
                                             cout << "[DATA_MERGED] " <<NAME<< __func__ << " cpu: " << read_cpu << " instr_id: " << RQ.entry[index].instr_id;
                                             cout << " merged rob_index: " << RQ.entry[index].rob_index << " instr_id: " << RQ.entry[index].instr_id << " lq_index: " << RQ.entry[index].lq_index; 
                                             cout << " MSHR instr_id: " << MSHR.entry[mshr_index].instr_id << endl; 
@@ -2399,7 +2399,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
 
                                         cout << " cycle: " << RQ.entry[index].event_cycle << endl; });
                                 //naman nish
-                                if (RQ.entry[index].instr_id == DEBUG_INSTRUCTION) { 
+                                if (RQ.entry[index].instr_id == DEBUG_INSTRUCTION && RQ.entry[index].instruction == INSTRUCTION) { 
                                         cout << "[" << NAME << "] " << __func__ << " this should be printed";
                                         cout << " instr_id: " << RQ.entry[index].instr_id << " prior_id: " << MSHR.entry[mshr_index].instr_id;
                                         cout << " address: " << hex << RQ.entry[index].address;
@@ -2629,7 +2629,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                         DP ( if (warmup_complete[PQ.entry[index].cpu] ) {
                                 cout << "[" << NAME << "_PQ] " <<  __func__ << " prefetch_id: " << PQ.entry[index].prefetch_id << "from handle prefetch on dropping prefetch request" << "instruction : " << PQ.entry[index].instruction << endl; });	
                         //nman nish
-                        if (PQ.entry[index].instr_id == DEBUG_INSTRUCTION) { cout << "[" << NAME << "_PQ] " << __func__ << " prefetch_id: " << PQ.entry[index].prefetch_id << "from handle prefetch on dropping prefetch request"
+                        if (PQ.entry[index].instr_id == DEBUG_INSTRUCTION && PQ.entry[index].instruction == INSTRUCTION) { cout << "[" << NAME << "_PQ] " << __func__ << " prefetch_id: " << PQ.entry[index].prefetch_id << "from handle prefetch on dropping prefetch request"
                                                                     << "instruction : " << PQ.entry[index].instruction << endl; }
                 
                         //nman nish
@@ -2651,7 +2651,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                         sim_access[prefetch_cpu][PQ.entry[index].type]++;
 
                         //naman nish
-                        if (PQ.entry[index].instr_id == DEBUG_INSTRUCTION) {
+                        if (PQ.entry[index].instr_id == DEBUG_INSTRUCTION && PQ.entry[index].instruction == INSTRUCTION) {
                                 cout << "[" << NAME << "] " << __func__ << " prefetch hit";
                                 cout << " instr_id: " << PQ.entry[index].prefetch_id << " address: " << hex << PQ.entry[index].address;
                                 cout << " full_addr: " << PQ.entry[index].full_addr << dec << " fill_level: " << PQ.entry[index].fill_level;
@@ -2790,7 +2790,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                                 cout << " full_addr: " << PQ.entry[index].full_addr << dec << " fill_level: " << PQ.entry[index].fill_level;
                                 cout << " cycle: " << PQ.entry[index].event_cycle << endl; });
                         //nman nish
-                        if (PQ.entry[index].instr_id == DEBUG_INSTRUCTION) {
+                        if (PQ.entry[index].instr_id == DEBUG_INSTRUCTION && PQ.entry[index].instruction == INSTRUCTION) {
                                 cout << "[" << NAME << "] " << __func__ << " prefetch hit";
                                 cout << " instr_id: " << PQ.entry[index].prefetch_id << " address: " << hex << PQ.entry[index].address;
                                 cout << " full_addr: " << PQ.entry[index].full_addr << dec << " fill_level: " << PQ.entry[index].fill_level;
@@ -2825,7 +2825,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                                     cout << " occupancy: " << lower_level->get_occupancy(3, PQ.entry[index].address) << " SIZE: " << lower_level->get_size(3, PQ.entry[index].address) << endl; });
                             
                             //naman nish
-                            if (PQ.entry[index].instr_id == DEBUG_INSTRUCTION) {
+                            if (PQ.entry[index].instr_id == DEBUG_INSTRUCTION && PQ.entry[index].instruction == INSTRUCTION) {
                                     cout << "[" << NAME << "_PQ] " <<  __func__ << " want to add prefetch_id: " << PQ.entry[index].prefetch_id << " address: " << hex << PQ.entry[index].address;
                                     cout << " full_addr: " << PQ.entry[index].full_addr << dec;
                                     if(lower_level)
@@ -3001,7 +3001,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                                         cout << " full_addr: " << PQ.entry[index].full_addr << dec << " fill_level: " << MSHR.entry[mshr_index].fill_level;
                                         cout << " cycle: " << MSHR.entry[mshr_index].event_cycle << endl; });
                                 //naman nish
-                                if (PQ.entry[index].instr_id == DEBUG_INSTRUCTION) {
+                                if (PQ.entry[index].instr_id == DEBUG_INSTRUCTION && PQ.entry[index].instruction == INSTRUCTION) {
                             cout << "[" << NAME << "] " << __func__ << " mshr merged";
                             cout << " instr_id: " << PQ.entry[index].instr_id << " prior_id: " << MSHR.entry[mshr_index].instr_id; 
                             cout << " address: " << hex << PQ.entry[index].address;
@@ -3024,7 +3024,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                                     cout << " full_addr: " << PQ.entry[index].full_addr << dec << " fill_level: " << PQ.entry[index].fill_level;
                                     cout << " cycle: " << PQ.entry[index].event_cycle << endl; });
                             //naman nish
-                                                if (PQ.entry[index].instr_id == DEBUG_INSTRUCTION) {
+                                                if (PQ.entry[index].instr_id == DEBUG_INSTRUCTION && PQ.entry[index].instruction == INSTRUCTION) {
                                     cout << "[" << NAME << "] " << __func__ << " prefetch miss handled";
                                     cout << " instr_id: " << PQ.entry[index].instr_id << " address: " << hex << PQ.entry[index].address;
                                     cout << " full_addr: " << PQ.entry[index].full_addr << dec << " fill_level: " << PQ.entry[index].fill_level;
@@ -3229,7 +3229,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                     cout << " lru: " << block[set][way].lru << " tag: " << hex << block[set][way].tag << " full_addr: " << block[set][way].full_addr;
                     cout << " data: " << block[set][way].data << dec << endl; });
             //naman nish
-            if (packet->instr_id == DEBUG_INSTRUCTION) {
+            if (packet->instr_id == DEBUG_INSTRUCTION && packet->instruction == INSTRUCTION) {
                     cout << "[" << NAME << "] " << __func__ << " instr_id: " << packet->instr_id << " set: " << set << " way: " << way;
                     cout << " lru: " << block[set][way].lru << " tag: " << hex << block[set][way].tag << " full_addr: " << block[set][way].full_addr;
                     cout << " data: " << block[set][way].data << dec << endl; }
@@ -3499,7 +3499,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                             cout << "[" << NAME << "_INSTR_MERGED] " << __func__ << " cpu: " << packet->cpu << " instr_id: " << RQ.entry[index].instr_id;
                             cout << " merged rob_index: " << rob_index << " instr_id: " << packet->instr_id << endl; });
                     //naman nish
-                    if (RQ.entry[index].instr_id == DEBUG_INSTRUCTION) {
+                    if (RQ.entry[index].instr_id == DEBUG_INSTRUCTION && RQ.entry[index].instruction == INSTRUCTION) {
                     cout << "[" << NAME << "_INSTR_MERGED] " << __func__ << " cpu: " << packet->cpu << " instr_id: " << RQ.entry[index].instr_id;
                     cout << " merged rob_index: " << rob_index << " merged instr_id: " << packet->instr_id << endl; }
                     //naman nish
@@ -3593,6 +3593,12 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                             uint32_t lq_index = packet->lq_index; 
                             RQ.entry[index].lq_index_depend_on_me.insert(lq_index);
                             RQ.entry[index].load_merged = 1;
+                            if(packet->instr_id == DEBUG_INSTRUCTION){
+                                cout << "RQ entry: " << RQ.entry[index].instr_id << endl;
+                                ITERATE_SET(merged, ooo_cpu[0].L1D.RQ.entry[index].lq_index_depend_on_me, LQ_SIZE){
+                                    cout << "entries: " << ooo_cpu[0].LQ.entry[merged].instr_id << endl;
+                                }
+                            }
                         }
                         RQ.entry[index].is_data = 1; // add as data type
                     }
@@ -3629,7 +3635,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
 
                             cout << " merged rob_index: " << packet->rob_index << " instr_id: " << packet->instr_id << " lq_index: " << packet->lq_index << endl; });
                     //naman nish
-                    if (RQ.entry[index].instr_id ==  DEBUG_INSTRUCTION) {
+                    if (RQ.entry[index].instr_id ==  DEBUG_INSTRUCTION && RQ.entry[index].instruction == INSTRUCTION) {
                             cout << "["<<NAME<<"_DATA_MERGED] " << __func__ << " cpu: " << packet->cpu << " instr_id: " << RQ.entry[index].instr_id;
                             cout << " Fill level: " << RQ.entry[index].fill_level;
                             // // cout << " Request_from: " << packet->request_from;
@@ -3776,12 +3782,22 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                     cout << " event: " << RQ.entry[index].event_cycle << " current: " << current_core_cycle[RQ.entry[index].cpu] << endl;});
             //naman nish
             // WQ_debug
-    if(RQ.entry[index].instr_id == DEBUG_INSTRUCTION){
+    if(RQ.entry[index].instr_id == DEBUG_INSTRUCTION && RQ.entry[index].instruction == INSTRUCTION){
         cout << "[" << NAME << "_RQ] " <<  __func__ << " instr_id: " << RQ.entry[index].instr_id << " address: " << hex << RQ.entry[index].address;
         cout << " full_addr: " << RQ.entry[index].full_addr;
         cout << " virtual_addr: " << RQ.entry[index].full_virtual_address;
         cout << " physical_addr: " << RQ.entry[index].full_physical_address << dec;
         cout << " index: " << index;
+        cout << " is_speculative: " << (unsigned)RQ.entry[index].is_speculative;
+        cout << " entry's YSCI: " << ooo_cpu[packet->cpu].ROB.entry[RQ.entry[index].rob_index].youngest_shadow_casting_instr_id;
+        cout << " entry's is_branch: " << (unsigned)ooo_cpu[packet->cpu].ROB.entry[RQ.entry[index].rob_index].is_branch;
+        if(RQ.entry[index].load_merged){
+            cout << "merged entries:" << endl;
+            ITERATE_SET(merged, RQ.entry[index].lq_index_depend_on_me, LQ_SIZE){
+                cout << ooo_cpu[0].LQ.entry[merged].instr_id << ", ";
+            }
+            cout << endl;
+        }
         // cout << " packet->request_from: " << packet->request_from;
         // cout << " RQ->request_from: " << RQ.entry[index].request_from;
         // cout << " rq_index: " << RQ.entry[index].rq_index[packet->request_from];
@@ -4223,7 +4239,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                 DP ( if (warmup_complete[packet->cpu]) {
                         cout << "[" << NAME << "] cannot process add_pq since it is full" << endl; });
                 //naman nish
-                if (packet->instr_id == DEBUG_INSTRUCTION) { cout << "[" << NAME << "] cannot process add_pq since it is full" << endl; }
+                if (packet->instr_id == DEBUG_INSTRUCTION && packet->instruction == INSTRUCTION) { cout << "[" << NAME << "] cannot process add_pq since it is full" << endl; }
                 
                 //naman nish        
                 return -2; // cannot handle this request
@@ -4377,7 +4393,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                     cout << " event: " << PQ.entry[index].event_cycle << " current: " << current_core_cycle[PQ.entry[index].cpu] << endl; });
 
             //naman nish
-            if (packet->instr_id == DEBUG_INSTRUCTION) {
+            if (packet->instr_id == DEBUG_INSTRUCTION && packet->instruction == INSTRUCTION) {
                     cout << "[" << NAME << "_PQ] " <<  __func__ << " prefetch_id: " << PQ.entry[index].prefetch_id << " address: " << hex << PQ.entry[index].address;
                     cout << " full_addr: " << PQ.entry[index].full_addr << dec;
                     cout << " type: " << +PQ.entry[index].type << " head: " << PQ.head << " tail: " << PQ.tail << " occupancy: " << PQ.occupancy;
@@ -4431,7 +4447,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
             MSHR.num_returned++;
             MSHR.entry[mshr_index].returned = COMPLETED;
             //naman nish
-            if(MSHR.entry[mshr_index].instr_id == DEBUG_INSTRUCTION)
+            if(MSHR.entry[mshr_index].instr_id == DEBUG_INSTRUCTION && MSHR.entry[mshr_index].instruction == INSTRUCTION)
             {
             cout<<"MSHR COMPLETED " << NAME << " instr_id: " << MSHR.entry[mshr_index].instr_id << endl;
             }
@@ -4460,16 +4476,9 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
             else
                 MSHR.entry[mshr_index].event_cycle += LATENCY;
 
-            //naman
-            if(warmup_complete){
-                if(cache_type == IS_L1D)// && MSHR.entry[mshr_index].instr_id == 78025){//&& MSHR.entry[mshr_index].instr_id == 457424){
-                    cout << "address" <<setw(16) <<hex<<  MSHR.entry[mshr_index].full_addr << " event cycle" <<MSHR.entry[mshr_index].event_cycle << " cycle enqeued " << MSHR.entry[mshr_index].cycle_enqueued << " latency " <<dec <<  MSHR.entry[mshr_index].event_cycle - MSHR.entry[mshr_index].cycle_enqueued <<" " << " Instruction id "<< hex << MSHR.entry[mshr_index].instr_id<< " packet type "<<unsigned(MSHR.entry[mshr_index].type) <<endl;   
-            // }
-            }
-            //naman
 
             //naman nish
-            if (packet->instr_id == DEBUG_INSTRUCTION) {
+            if (packet->instr_id == DEBUG_INSTRUCTION && packet->instruction == INSTRUCTION) {
         cout << "[" << NAME << "_MSHR] " <<  __func__ << " instr_id: " << MSHR.entry[mshr_index].instr_id << " type: " << unsigned(MSHR.entry[mshr_index].type);
         cout << " address: " << hex << MSHR.entry[mshr_index].address << " full_addr: " << MSHR.entry[mshr_index].full_addr;
         cout << " virtual_addr: " << MSHR.entry[mshr_index].full_virtual_address;
@@ -4522,50 +4531,60 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
 
             uint64_t min_cycle = UINT64_MAX;
             uint32_t min_index = MSHR.SIZE;
+            int all_spec_flag = 0;
             for (uint32_t i=0; i<MSHR.SIZE; i++) {
 
                 //vedant: Code to check In L1D if the load is safe then only do fill
-                // if(cache_type==IS_L1D && !MSHR.entry[i].is_speculative)
+                if(cache_type==IS_L1D && MSHR.entry[i].is_speculative)
                 //vedant open if
                 {
-
-                if ((MSHR.entry[i].returned == COMPLETED) && (MSHR.entry[i].event_cycle < min_cycle)) {
-
-
-
-                    min_cycle = MSHR.entry[i].event_cycle;
-                    min_index = i;
-                    //naman nish
-                    //WQ_debug
-                    if (MSHR.entry[i].instr_id == DEBUG_INSTRUCTION) {
-                        cout << "[" << NAME << "_MSHR] " <<  __func__ << " completed instr_id: " << MSHR.entry[i].instr_id;
-                        cout << " address: " << hex << MSHR.entry[i].address << " full_addr: " << MSHR.entry[i].full_addr;
-                        cout << " virtual_addr: " << MSHR.entry[i].full_virtual_address;
-                        cout << " physical_addr: " << MSHR.entry[i].full_physical_address;
-                        cout << " data: " << MSHR.entry[i].data << dec << " returned: " << +MSHR.entry[i].returned << " fill_level: " << MSHR.entry[i].fill_level;
-                        cout << " index: " << i << " occupancy: " << MSHR.occupancy;
-                        cout << " event: " << MSHR.entry[i].event_cycle << " current: " << current_core_cycle[MSHR.entry[i].cpu] << " next: " << MSHR.next_fill_cycle << endl; }
-        
-                    //naman nish
-                }
+                        if(MSHR.entry[i].instr_id == DEBUG_INSTRUCTION && MSHR.entry[i].instruction == INSTRUCTION){
+                            for(int j = 0; j < ooo_cpu[0].L1D.MSHR.SIZE; j++){
+                                cout << "index: " << j << " entry: " << ooo_cpu[0].L1D.MSHR.entry[j].instr_id << " is_spec: " << (unsigned)MSHR.entry[j].is_speculative << endl;
+                                cout << "merged entries:" << endl;
+                                ITERATE_SET(merged, ooo_cpu[0].L1D.MSHR.entry[j].lq_index_depend_on_me, LQ_SIZE){
+                                    cout << ooo_cpu[0].LQ.entry[merged].instr_id << ", ";
+                                }
+                                cout << endl;
+                            }
+                        }
+                    continue;
+                    all_spec_flag = 1;
 
                 //vedant close if
                 }
-
-                DP (if (warmup_complete[MSHR.entry[i].cpu] ) {
-                        cout << "[" << NAME << "_MSHR] " <<  __func__ << " checking instr_id: " << MSHR.entry[i].instr_id;
-                        cout << " address: " << hex << MSHR.entry[i].address << " full_addr: " << MSHR.entry[i].full_addr;
-                        cout << " data: " << MSHR.entry[i].data << dec << " returned: " << +MSHR.entry[i].returned << " fill_level: " << MSHR.entry[i].fill_level;
-                        cout << " index: " << i << " occupancy: " << MSHR.occupancy;
-                        cout << " event: " << MSHR.entry[i].event_cycle << " current: " << current_core_cycle[MSHR.entry[i].cpu] << " next: " << MSHR.next_fill_cycle << endl; });
+                else{
+                    if ((MSHR.entry[i].returned == COMPLETED) && (MSHR.entry[i].event_cycle < min_cycle)) {
+                        if(MSHR.entry[i].instr_id == DEBUG_INSTRUCTION && MSHR.entry[i].instruction == INSTRUCTION){
+                            for(int j = 0; j < ooo_cpu[0].L1D.MSHR.SIZE; j++)
+                                cout << "index: " << j << " entry: " << ooo_cpu[0].L1D.MSHR.entry[j].instr_id << " is_spec: " << (unsigned)MSHR.entry[j].is_speculative << endl;
+                        }
+                        all_spec_flag = 0;
+                        min_cycle = MSHR.entry[i].event_cycle;
+                        min_index = i;
+                        //naman nish
+                        //WQ_debug
+                        if (MSHR.entry[i].instr_id == DEBUG_INSTRUCTION && MSHR.entry[i].instruction == INSTRUCTION) {
+                            cout << "[" << NAME << "_MSHR] " <<  __func__ << " completed instr_id: " << MSHR.entry[i].instr_id;
+                            cout << " address: " << hex << MSHR.entry[i].address << " full_addr: " << MSHR.entry[i].full_addr;
+                            cout << " virtual_addr: " << MSHR.entry[i].full_virtual_address;
+                            cout << " physical_addr: " << MSHR.entry[i].full_physical_address;
+                            cout << " data: " << MSHR.entry[i].data << dec << " returned: " << +MSHR.entry[i].returned << " fill_level: " << MSHR.entry[i].fill_level;
+                            cout << " index: " << i << " occupancy: " << MSHR.occupancy;
+                            cout << " event: " << MSHR.entry[i].event_cycle << " current: " << current_core_cycle[MSHR.entry[i].cpu] << " next: " << MSHR.next_fill_cycle << endl; }
+            
+                        //naman nish
+                    }
+                }
             }
-
+            if(all_spec_flag)
+                return;
             MSHR.next_fill_cycle = min_cycle;
             MSHR.next_fill_index = min_index;
             //naman nish
-                if(MSHR.entry[MSHR.next_fill_index].instr_id == DEBUG_INSTRUCTION)
+                if(MSHR.entry[MSHR.next_fill_index].instr_id == DEBUG_INSTRUCTION && MSHR.entry[MSHR.next_fill_index].instruction == INSTRUCTION)
             {
-        // cout<<"MSHR next_fill_index$ " << NAME << " instr_id: " << MSHR.entry[MSHR.next_fill_index].instr_id << endl;
+                cout<<"MSHR next_fill_index " << MSHR.next_fill_index << " instr_id: " << MSHR.entry[MSHR.next_fill_index].instr_id << endl;
             }
             //naman nish
             if (min_index < MSHR.SIZE) {
@@ -4608,7 +4627,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
 
                         //naman nish
                         //WQ_debug
-                if (packet->instr_id == DEBUG_INSTRUCTION) {
+                if (packet->instr_id == DEBUG_INSTRUCTION && packet->instruction == INSTRUCTION) {
                 cout << "[" << NAME << "_" << queue->NAME << "] " << __func__ << " same entry instr_id: " << packet->instr_id << " prior_id: " << queue->entry[index].instr_id;
                 cout << " address: " << hex << packet->address;
                 cout << " full_addr: " << packet->full_addr << dec 
@@ -4632,7 +4651,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
 
                         //naman nish
                         //WQ_debug
-                if (packet->instr_id == DEBUG_INSTRUCTION) {
+                if (packet->instr_id == DEBUG_INSTRUCTION && packet->instruction == INSTRUCTION) {
                 cout << "[" << NAME << "_" << queue->NAME << "] " << __func__ << " same entry instr_id: " << packet->instr_id << " prior_id: " << queue->entry[index].instr_id;
                 cout << " address: " << hex << packet->address;
                 cout << " full_addr: " << packet->full_addr << " check_addr: "<< check_address << dec 
@@ -4650,7 +4669,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
             
             //naman nish
             // WQ_debug
-    if (packet->instr_id == DEBUG_INSTRUCTION) {
+    if (packet->instr_id == DEBUG_INSTRUCTION && packet->instruction == INSTRUCTION) {
                     cout << "[" << NAME << "_" << queue->NAME << "] " << __func__ << " instr_id: " << packet->instr_id << " new address: " << hex << packet->address;
                     cout << " full_addr: " << packet->full_addr<< " check_addr: "<< check_address << dec 
                     << " current_core_cycle: " << current_core_cycle[packet->cpu] << " event_cycle: " << packet->event_cycle << endl; }
@@ -4665,7 +4684,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                     
             //naman nish
             // WQ_debug
-    if (packet->instr_id == DEBUG_INSTRUCTION && (queue->occupancy == queue->SIZE)) { 
+    if (packet->instr_id == DEBUG_INSTRUCTION && packet->instruction == INSTRUCTION && (queue->occupancy == queue->SIZE)) { 
                     cout << "[" << NAME << "_" << queue->NAME << "] " << __func__ << " mshr is full";
                     cout << " instr_id: " << packet->instr_id << " occupancy: " << queue->occupancy;
                     cout << " address: " << hex << packet->address;
@@ -4712,9 +4731,16 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                     
                     //naman nish
                     // WQ_debug
-            if (packet->instr_id == DEBUG_INSTRUCTION) {
+            if (packet->instr_id == DEBUG_INSTRUCTION && packet->instruction == INSTRUCTION) {
                             cout << "[" << NAME << "_" << queue->NAME << "] " << __func__ << " instr_id: " << packet->instr_id;
                             cout << " address: " << hex << packet->address << " full_addr: " << packet->full_addr << dec;
+                            if(packet->load_merged){
+                                cout << "merged entries:" << endl;
+                                ITERATE_SET(merged, packet->lq_index_depend_on_me, LQ_SIZE){
+                                    cout << ooo_cpu[0].LQ.entry[merged].instr_id << ", ";
+                                }
+                                cout << endl;
+                            }
                             // if(packet->read_translation_merged[packet->request_from])
                             // cout << " read_translation_merged ";
                             // else if(packet->write_translation_merged[packet->request_from])

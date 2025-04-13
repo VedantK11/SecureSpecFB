@@ -583,7 +583,6 @@ uint32_t O3_CPU::add_to_rob(ooo_model_instr *arch_instr)
     ROB.entry[index] = *arch_instr;
     ROB.entry[index].event_cycle = current_core_cycle[cpu];
 
-     //Sumon (classification of speculative instruction): linking instruction with the current youngest shadow casting instruction at the time of dispatch.
     int shadow_index = -1;
 
     if(SHADOW_BUFFER.tail == 0)
@@ -593,8 +592,29 @@ uint32_t O3_CPU::add_to_rob(ooo_model_instr *arch_instr)
 
     if(SHADOW_BUFFER.entry_pointer[shadow_index])
         ROB.entry[index].youngest_shadow_casting_instr_id = SHADOW_BUFFER.entry_pointer[shadow_index]->instr_id;
+    else
+        ROB.entry[index].youngest_shadow_casting_instr_id = UINT64_MAX;
+        
 
 
+    if(arch_instr->instr_id == DEBUG_INSTRUCTION)
+    {
+        cout << __func__ << " rob_index: " << index;
+        cout << " instr_id: " << ROB.entry[index].instr_id;
+        cout << " ROB entry's YSCI: " << ROB.entry[index].youngest_shadow_casting_instr_id << setw(5);
+        cout << " Shadow buffer occupancy: " << SHADOW_BUFFER.occupancy << setw(5);
+        cout << " Shadow buffer head: " << SHADOW_BUFFER.head << setw(5);
+        cout << " Shadow buffer tail: " << shadow_index << setw(5);
+        if(SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head])
+            cout << " Shadow buffer head entry: " << SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id << setw(5);
+        if(SHADOW_BUFFER.entry_pointer[shadow_index])
+            cout << " Shadow buffer tail entry: " << SHADOW_BUFFER.entry_pointer[shadow_index]->instr_id;
+        cout << endl;
+        for (uint32_t j=0; j<SHADOW_BUFFER.SIZE; j++) {
+            if(SHADOW_BUFFER.entry_pointer[j])
+            cout << "[SHADOW_BUFFER] entry: " << j << " instr_id: " << SHADOW_BUFFER.entry_pointer[j]->instr_id << endl;
+        }
+    }
     ROB.occupancy++;
     ROB.tail++;
     if (ROB.tail >= ROB.SIZE)
@@ -622,7 +642,6 @@ uint32_t O3_CPU::add_to_shadow_buffer(ooo_model_instr *arch_instr)
 {
 
     uint32_t index = SHADOW_BUFFER.tail;
-    // Sumon: condition checks if there is a valid pointer pointing to an instruction in the ROB
     if(SHADOW_BUFFER.entry_pointer[index] != NULL)
     {
         if (SHADOW_BUFFER.entry_pointer[index]->instr_id != 0)
@@ -639,6 +658,27 @@ uint32_t O3_CPU::add_to_shadow_buffer(ooo_model_instr *arch_instr)
     if (SHADOW_BUFFER.tail >= SHADOW_BUFFER.SIZE)
         SHADOW_BUFFER.tail = 0;
 
+    if(arch_instr->instr_id == DEBUG_INSTRUCTION)
+    {
+        // cout << "rob_index: " << index;
+        cout << __func__ << " instr_id: " << arch_instr->instr_id;
+        // cout << " ROB entry's YSCI: " << ROB.entry[index].youngest_shadow_casting_instr_id << setw(5);
+        cout << " Shadow buffer occupancy: " << SHADOW_BUFFER.occupancy << setw(5);
+        cout << " Shadow buffer head: " << SHADOW_BUFFER.head << setw(5);
+        cout << " Shadow buffer tail: " << (SHADOW_BUFFER.tail-1) << setw(5);
+        if(SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head])
+            cout << " Shadow buffer head entry: " << SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id << setw(5);
+        if(SHADOW_BUFFER.tail != 0 && SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.tail - 1])
+            cout << " Shadow buffer tail entry: " << SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.tail - 1]->instr_id;
+        else if(SHADOW_BUFFER.tail == 0 && SHADOW_BUFFER.entry_pointer[351])
+            cout << " Shadow buffer tail entry: " << SHADOW_BUFFER.entry_pointer[351]->instr_id;
+        cout << endl;
+        cout << endl << "SHADOW BUFFER Entry" << endl;
+        for (uint32_t j=0; j<SHADOW_BUFFER.SIZE; j++) {
+            if(SHADOW_BUFFER.entry_pointer[j])
+            cout << "[SHADOW_BUFFER] entry: " << j << " instr_id: " << SHADOW_BUFFER.entry_pointer[j]->instr_id << endl;
+        }
+    }
         // DP ( if (warmup_complete[cpu]) {
         // cout << "[SHADOW_BUFFER] " <<  __func__ << " instr_id: " << SHADOW_BUFFER.entry[index].instr_id;
         // cout << " ip: " << hex << SHADOW_BUFFER.entry[index].ip << dec;
@@ -656,10 +696,9 @@ uint32_t O3_CPU::add_to_shadow_buffer(ooo_model_instr *arch_instr)
     return index;
 }
 
-uint32_t O3_CPU::retire_shadow_buffer()
+uint32_t O3_CPU::retire_shadow_buffer(int rob_index)
 {
     // retire is in-order
-    // Sumon: condition checks if there is a valid pointer pointing to an instruction in the ROB
     for (uint32_t n = 0; (n < RETIRE_WIDTH && SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]); n++)
     {
         if (SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->executed != COMPLETED)
@@ -669,13 +708,38 @@ uint32_t O3_CPU::retire_shadow_buffer()
             // cout << "[ROB] " << __func__ << " instr_id: " << ROB.entry[ROB.head].instr_id << " head: " << ROB.head << " is not executed yet" << endl; });
             return 0;
         }
+        if(SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id == ROB.entry[rob_index].instr_id){
+            SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head] = NULL;
 
-        SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head] = NULL;
-
-        SHADOW_BUFFER.head++;
-        if (SHADOW_BUFFER.head == SHADOW_BUFFER.SIZE)
+            SHADOW_BUFFER.head++;
+            if (SHADOW_BUFFER.head == SHADOW_BUFFER.SIZE)
             SHADOW_BUFFER.head = 0;
-        SHADOW_BUFFER.occupancy--;
+            SHADOW_BUFFER.occupancy--;
+            if(ROB.entry[rob_index].instr_id == DEBUG_INSTRUCTION)
+            {
+                // cout << "rob_index: " << index;
+                cout << __func__ << " instr_id: " << ROB.entry[rob_index].instr_id;
+                // cout << " ROB entry's YSCI: " << ROB.entry[index].youngest_shadow_casting_instr_id << setw(5);
+                cout << " Shadow buffer occupancy: " << SHADOW_BUFFER.occupancy << setw(5);
+                cout << " Shadow buffer head: " << SHADOW_BUFFER.head << setw(5);
+                cout << " Shadow buffer tail: " << (SHADOW_BUFFER.tail - 1) << setw(5);
+                if(SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head])
+                    cout << " Shadow buffer head entry: " << SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id << setw(5);
+                if(SHADOW_BUFFER.tail != 0 && SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.tail - 1])
+                    cout << " Shadow buffer tail entry: " << SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.tail - 1]->instr_id;
+                else if(SHADOW_BUFFER.tail == 0 && SHADOW_BUFFER.entry_pointer[351])
+                    cout << " Shadow buffer tail entry: " << SHADOW_BUFFER.entry_pointer[351]->instr_id;
+                // if(SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.tail - 1])
+                //     cout << " Shadow buffer tail entry: " << SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.tail - 1]->instr_id;
+                cout << "cycle: " << current_core_cycle[0] << endl;
+                cout << endl;
+                cout << endl << "SHADOW BUFFER Entry" << endl;
+                for (uint32_t j=0; j<SHADOW_BUFFER.SIZE; j++) {
+                    if(SHADOW_BUFFER.entry_pointer[j])
+                    cout << "[SHADOW_BUFFER] entry: " << j << " instr_id: " << SHADOW_BUFFER.entry_pointer[j]->instr_id << endl;
+                }
+            }
+        }
     }
     return 0;
 }   
@@ -1119,7 +1183,6 @@ void O3_CPU::decode_and_dispatch()
 			  // move this instruction to the ROB if there's space
 			uint32_t rob_index = add_to_rob(&DECODE_BUFFER.entry[DECODE_BUFFER.head]);
 
-            // @Sumon: add Shadow casting instructions to shadow buffer.
             // All branch, load and store instructions can cast a speculative shadow to succeeding instructions.
             // The above is true for loads and stores as they can cause an exception at its later stages of execution, which cannot be predicted at the start. For branches it is obvious.
             if (ROB.entry[rob_index].is_branch /*|| ROB.entry[rob_index].is_memory*/)
@@ -1465,6 +1528,8 @@ void O3_CPU::do_execution(uint32_t rob_index)
     //if (ROB.entry[rob_index].reg_ready && (ROB.entry[rob_index].scheduled == COMPLETED) && (ROB.entry[rob_index].event_cycle <= current_core_cycle[cpu])) {
 
         ROB.entry[rob_index].executed = INFLIGHT;
+        if(ROB.entry[rob_index].instr_id == DEBUG_INSTRUCTION)
+            cout << "inflight is  marked" << endl;
 
         // ADD LATENCY
         if (ROB.entry[rob_index].event_cycle < current_core_cycle[cpu])
@@ -2203,17 +2268,16 @@ int O3_CPU::execute_load(uint32_t rob_index, uint32_t lq_index, uint32_t data_in
     data_packet.asid[1] = LQ.entry[lq_index].asid[1];
     data_packet.event_cycle = LQ.entry[lq_index].event_cycle;
 
-    // Sumon: (classification of speculative instruction)
-    // condition 1: checks if there is a valid pointer pointing to an instruction in the ROB
-    // condition 2: compare the instructions shadow casting instruction with the head of the Shadow buffer. This checks if the current instruction is still under speculative shadow.
     // If the instruction at the head of Shadow buffer is younger than the instruction's shadow casting instruction, then it is no more speculative.
     if(SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head] && (SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id > ROB.entry[rob_index].youngest_shadow_casting_instr_id))
     //if the ROB instr which casted a shadow on the current instr has exited from the SHADOW_BUFFER then the current load is no longer speculative
         non_spec_loads++; 
     else
     {
-        data_packet.is_speculative = 1;
-        ROB.entry[rob_index].speculative_bit = 1;
+        if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[rob_index].youngest_shadow_casting_instr_id != UINT64_MAX){
+            data_packet.is_speculative = 1;
+            ROB.entry[rob_index].speculative_bit = 1;
+        }
     }    
     ROB.entry[rob_index].fetched_cycle = current_core_cycle[cpu]; 
     total_loads++;
@@ -2236,6 +2300,8 @@ void O3_CPU::complete_execution(uint32_t rob_index)
 {
 	////DP ( if (warmup_complete[cpu]) {	//*******************************************************************************************
           //      //cout << "Entered complete_execution() "<< endl; });
+    if(ROB.entry[rob_index].instr_id == DEBUG_INSTRUCTION)
+        cout << "reached here9 executed" << (unsigned)ROB.entry[rob_index].executed << "num_mem_ops: " << ROB.entry[rob_index].num_mem_ops << endl;
     if (ROB.entry[rob_index].is_memory == 0) {
         if ((ROB.entry[rob_index].executed == INFLIGHT) && (ROB.entry[rob_index].event_cycle <= current_core_cycle[cpu])) {
 
@@ -2274,6 +2340,21 @@ void O3_CPU::complete_execution(uint32_t rob_index)
             //cout << "[ROB] " << __func__ << " instr_id: " << ROB.entry[rob_index].instr_id;
             //cout << " branch_mispredicted: " << +ROB.entry[rob_index].branch_mispredicted << " fetch_stall: " << +fetch_stall;
             //cout << " event: " << ROB.entry[rob_index].event_cycle << endl; });
+            if(ROB.entry[rob_index].instr_id == DEBUG_INSTRUCTION)
+                cout << "reached here1 cycle" << current_core_cycle[0] << endl;
+                // cout << "cycle: " << current_core_cycle[0] << endl;
+            if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[rob_index].instr_id == SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id && ROB.entry[rob_index].is_branch)
+            {
+                mark_non_spec();
+            }
+            else if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[rob_index].instr_id != SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id && ROB.entry[rob_index].is_branch){
+                mark_safe(rob_index);
+            }
+            if(SHADOW_BUFFER.occupancy != 0 && !SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->is_safe){
+            // if(ROB.entry[ROB.head].instr_id == DEBUG_INSTRUCTION)
+            //     cout << "instr_id in retire_rob: " << ROB.entry[ROB.head].instr_id << "cycle: " << current_core_cycle[0] << endl;
+                forward_merged_packet();
+            }
         }
     }
     else {
@@ -2312,11 +2393,32 @@ void O3_CPU::complete_execution(uint32_t rob_index)
                     //vedant: code to mark the load as safe
                 }
 
-                //DP(if(warmup_complete[cpu]) {
-                //cout << "[ROB] " << __func__ << " instr_id: " << ROB.entry[rob_index].instr_id;
-                //cout << " is_memory: " << +ROB.entry[rob_index].is_memory << " branch_mispredicted: " << +ROB.entry[rob_index].branch_mispredicted;
-                //cout << " fetch_stall: " << +fetch_stall << " event: " << ROB.entry[rob_index].event_cycle << " current: " << current_core_cycle[cpu] << endl; });
+                if(ROB.entry[rob_index].instr_id == DEBUG_INSTRUCTION)
+                    cout << "reached here2 cycle" << current_core_cycle[0] << endl;
+                if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[rob_index].instr_id == SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id && ROB.entry[rob_index].is_branch)
+                {
+                    mark_non_spec();
+                }
+                else if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[rob_index].instr_id != SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id && ROB.entry[rob_index].is_branch){
+                    mark_safe(rob_index);
+                }
             }
+        }
+        else if(ROB.entry[rob_index].num_mem_ops != 0 && ROB.entry[rob_index].is_branch){
+            if(ROB.entry[rob_index].instr_id == DEBUG_INSTRUCTION)
+                cout << "reached here3 cycle" << current_core_cycle[0] << endl;
+            if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[rob_index].instr_id == SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id)
+            {
+                mark_non_spec();
+            }
+            else if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[rob_index].instr_id != SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id && ROB.entry[rob_index].is_branch){
+                mark_safe(rob_index);
+            }
+        }
+        if(SHADOW_BUFFER.occupancy != 0 && !SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->is_safe){
+        // if(ROB.entry[ROB.head].instr_id == DEBUG_INSTRUCTION)
+        //     cout << "instr_id in retire_rob: " << ROB.entry[ROB.head].instr_id << "cycle: " << current_core_cycle[0] << endl;
+            forward_merged_packet();
         }
     }
     ////DP ( if (warmup_complete[cpu]) {	//*******************************************************************************************
@@ -2394,6 +2496,8 @@ void O3_CPU::update_rob()
     //if (DTLB.PROCESSED.occupancy && (DTLB.PROCESSED.entry[DTLB.PROCESSED.head].event_cycle <= current_core_cycle[cpu]))
     //    complete_data_fetch(&DTLB.PROCESSED, 1);
 
+    // if(L1D.PROCESSED.entry[L1D.PROCESSED.head].instr_id == DEBUG_INSTRUCTION)
+        // cout << "num_mem_ops are: " << endl;
     if (L1D.PROCESSED.occupancy && (L1D.PROCESSED.entry[L1D.PROCESSED.head].event_cycle <= current_core_cycle[cpu]))
         complete_data_fetch(&L1D.PROCESSED, 0);
 
@@ -2402,6 +2506,9 @@ void O3_CPU::update_rob()
         if (ROB.head < ROB.tail) {
             for (uint32_t i=ROB.head; i<ROB.tail; i++) 
                 complete_execution(i);
+            // for (uint32_t i=L1D.PROCESSED.head; i<L1D.PROCESSED.tail; i++) 
+            //     // complete_execution(i);
+            //     cout << "entry: " << i <<L1D.PROCESSED.entry[i].instr_id << endl;
         }
         else {
             for (uint32_t i=ROB.head; i<ROB.SIZE; i++)
@@ -2410,6 +2517,15 @@ void O3_CPU::update_rob()
                 complete_execution(i);
         }
     }
+    // else if(inflight_mem_executions ==0 && inflight_reg_executions ==0){
+    //     if(ROB.entry[ROB.head].instr_id == DEBUG_INSTRUCTION)
+    //         cout << "rached here 10, ROB head: " << ROB.entry[ROB.head].instr_id << endl;
+    //     if(ROB.entry[ROB.head].is_memory && ROB.entry[ROB.head].executed == INFLIGHT /*&& ROB.entry[ROB.head].num_mem_ops == 0*/){
+    //         if(ROB.entry[ROB.head].num_mem_ops == 0)
+    //         inflight_mem_executions++;
+    //         complete_execution(ROB.head);
+    //     }
+    // }
 }
 
 void O3_CPU::complete_instr_fetch(PACKET_QUEUE *queue, uint8_t is_it_tlb)
@@ -2498,6 +2614,150 @@ void O3_CPU::complete_instr_fetch(PACKET_QUEUE *queue, uint8_t is_it_tlb)
     
 }
 
+void O3_CPU::mark_non_spec()
+{
+    int sb_instr_id;
+    if(SHADOW_BUFFER.occupancy == 1){
+        sb_instr_id = SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id;
+        retire_shadow_buffer(ROB.head);
+        for(int i=0; i<L1D.RQ.SIZE; i++){
+            if(L1D.RQ.entry[i].is_speculative && ROB.entry[L1D.RQ.entry[i].rob_index].youngest_shadow_casting_instr_id == sb_instr_id) 
+            {
+                L1D.RQ.entry[i].is_speculative = 0;
+            }
+        }  
+        for(int i=0; i<L1D.MSHR.SIZE; i++){
+            if(L1D.MSHR.entry[i].is_speculative && ROB.entry[L1D.MSHR.entry[i].rob_index].youngest_shadow_casting_instr_id == sb_instr_id)
+            {
+                L1D.MSHR.entry[i].is_speculative = 0;
+                L1D.update_fill_cycle();
+            }
+        }  
+    }           
+    else{
+        if(SHADOW_BUFFER.head == SHADOW_BUFFER.SIZE - 1)
+        sb_instr_id = SHADOW_BUFFER.entry_pointer[0]->instr_id;
+        else
+        sb_instr_id = SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head + 1]->instr_id;
+        retire_shadow_buffer(ROB.head);
+        for(int i=0; i<L1D.RQ.SIZE; i++){
+            if(L1D.RQ.entry[i].is_speculative && ROB.entry[L1D.RQ.entry[i].rob_index].youngest_shadow_casting_instr_id < sb_instr_id) 
+            {
+                L1D.RQ.entry[i].is_speculative = 0;
+            }
+        }  
+        for(int i=0; i<L1D.MSHR.SIZE; i++){
+            if(L1D.MSHR.entry[i].is_speculative && ROB.entry[L1D.MSHR.entry[i].rob_index].youngest_shadow_casting_instr_id < sb_instr_id)
+            {
+                L1D.MSHR.entry[i].is_speculative = 0;
+                L1D.update_fill_cycle();
+            }
+        }             
+    }
+}
+
+void O3_CPU::mark_safe(int rob_index)
+{
+    if(SHADOW_BUFFER.head < SHADOW_BUFFER.tail){
+        for(int i=SHADOW_BUFFER.head; i<SHADOW_BUFFER.tail; i++){
+            if(SHADOW_BUFFER.entry_pointer[i]->instr_id == ROB.entry[rob_index].instr_id)
+            {
+                SHADOW_BUFFER.entry_pointer[i]->is_safe = 1;
+            }
+        }  
+    }
+    else{
+        for(int i=SHADOW_BUFFER.head; i<SHADOW_BUFFER.SIZE; i++){
+            if(SHADOW_BUFFER.entry_pointer[i]->instr_id == ROB.entry[rob_index].instr_id)
+            {
+                SHADOW_BUFFER.entry_pointer[i]->is_safe = 1;
+            }
+        }  
+        for(int i=0; i<SHADOW_BUFFER.tail; i++){
+            if(SHADOW_BUFFER.entry_pointer[i]->instr_id == ROB.entry[rob_index].instr_id)
+            {
+                SHADOW_BUFFER.entry_pointer[i]->is_safe = 1;
+            }
+        }  
+    }
+}
+
+void O3_CPU::forward_merged_packet()
+{
+    for(int i=0; i<L1D.RQ.SIZE; i++){
+        if(L1D.RQ.entry[i].is_speculative)
+        {
+            ITERATE_SET(merged, L1D.RQ.entry[i].lq_index_depend_on_me, LQ_SIZE){
+                if(ROB.entry[LQ.entry[merged].rob_index].youngest_shadow_casting_instr_id < SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id){
+                    L1D.RQ.entry[i].lq_index_depend_on_me.remove(merged);
+                    PACKET temp;
+                    temp.instr_id = LQ.entry[merged].instr_id;
+                    temp.lq_index = merged;
+                    temp.rob_index =LQ.entry[merged].rob_index;
+                    temp.event_cycle = current_core_cycle[0];
+                    // cout << "reached her for id: " <<LQ.entry[merged].instr_id << "rob_index:" << temp.rob_index<< "cycle: " << current_core_cycle[0] << endl;
+                    // cout << "num_mem_ops is : " << ROB.entry[temp.rob_index].num_mem_ops << endl;
+                    if (L1D.PROCESSED.occupancy < L1D.PROCESSED.SIZE)
+                        L1D.PROCESSED.add_queue(&temp);
+                    else
+                        assert(0);
+                }
+                else if(ROB.entry[LQ.entry[merged].rob_index].youngest_shadow_casting_instr_id == UINT64_MAX){
+                    L1D.MSHR.entry[i].lq_index_depend_on_me.remove(merged);
+                    PACKET temp;
+                    temp.instr_id = LQ.entry[merged].instr_id;
+                    temp.lq_index = merged;
+                    temp.rob_index =LQ.entry[merged].rob_index;
+                    temp.event_cycle = current_core_cycle[0];
+                    // cout << "reached her for id: " <<LQ.entry[merged].instr_id << "rob_index:" << temp.rob_index<< "cycle: " << current_core_cycle[0] << endl;
+                    // cout << "num_mem_ops is : " << ROB.entry[temp.rob_index].num_mem_ops << endl;
+                    if (L1D.PROCESSED.occupancy < L1D.PROCESSED.SIZE)
+                        L1D.PROCESSED.add_queue(&temp);
+                    else
+                        assert(0);
+                }
+            }
+        }
+    }  
+    for(int i=0; i<L1D.MSHR.SIZE; i++){
+        if(L1D.MSHR.entry[i].is_speculative)
+        {
+            if(ROB.entry[ROB.head].instr_id == DEBUG_INSTRUCTION)
+                cout << "instr_id in retire_rob: " << ROB.entry[ROB.head].instr_id << "cycle: " << current_core_cycle[0] << endl;
+            ITERATE_SET(merged, L1D.MSHR.entry[i].lq_index_depend_on_me, LQ.SIZE){
+                if(ROB.entry[LQ.entry[merged].rob_index].youngest_shadow_casting_instr_id < SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id){
+                    L1D.MSHR.entry[i].lq_index_depend_on_me.remove(merged);
+                    PACKET temp;
+                    temp.instr_id = LQ.entry[merged].instr_id;
+                    temp.lq_index = merged;
+                    temp.rob_index =LQ.entry[merged].rob_index;
+                    temp.event_cycle = current_core_cycle[0];
+                    // cout << "reached her for id: " <<LQ.entry[merged].instr_id << "rob_index:" << temp.rob_index<< "cycle: " << current_core_cycle[0] << endl;
+                    // cout << "num_mem_ops is : " << ROB.entry[temp.rob_index].num_mem_ops << endl;
+                    if (L1D.PROCESSED.occupancy < L1D.PROCESSED.SIZE)
+                        L1D.PROCESSED.add_queue(&temp);
+                    else
+                        assert(0);
+                }
+                else if(ROB.entry[LQ.entry[merged].rob_index].youngest_shadow_casting_instr_id == UINT64_MAX){
+                    L1D.MSHR.entry[i].lq_index_depend_on_me.remove(merged);
+                    PACKET temp;
+                    temp.instr_id = LQ.entry[merged].instr_id;
+                    temp.lq_index = merged;
+                    temp.rob_index =LQ.entry[merged].rob_index;
+                    temp.event_cycle = current_core_cycle[0];
+                    // cout << "reached her for id: " <<LQ.entry[merged].instr_id << "rob_index:" << temp.rob_index<< "cycle: " << current_core_cycle[0] << endl;
+                    // cout << "num_mem_ops is : " << ROB.entry[temp.rob_index].num_mem_ops << endl;
+                    if (L1D.PROCESSED.occupancy < L1D.PROCESSED.SIZE)
+                        L1D.PROCESSED.add_queue(&temp);
+                    else
+                        assert(0);
+                }
+            }
+        }
+    }  
+}
+
 void O3_CPU::complete_data_fetch(PACKET_QUEUE *queue, uint8_t is_it_tlb)
 {
 
@@ -2569,6 +2829,8 @@ void O3_CPU::complete_data_fetch(PACKET_QUEUE *queue, uint8_t is_it_tlb)
     }
     else { // L1D
 
+        if(ROB.entry[rob_index].instr_id == DEBUG_INSTRUCTION)
+            cout << "num_mem_ops are: " << ROB.entry[rob_index].num_mem_ops << endl;
         if (queue->entry[index].type == RFO)
             handle_merged_load(&queue->entry[index]);
         else { 
@@ -2804,7 +3066,21 @@ void O3_CPU::retire_rob()
             //cout << "[ROB] " << __func__ << " instr_id: " << ROB.entry[ROB.head].instr_id << " head: " << ROB.head << " is not executed yet" << endl; });
             return;
         }
+        if(ROB.entry[ROB.head].instr_id == DEBUG_INSTRUCTION)
+            cout << "instr_id in retire_rob: " << ROB.entry[ROB.head].instr_id << "cycle: " << current_core_cycle[0] << endl;
+        if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[ROB.head].instr_id == SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id && ROB.entry[ROB.head].is_branch)
+        {
+            mark_non_spec();
+        }
 
+        else if(SHADOW_BUFFER.occupancy != 0 && SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->is_safe && ROB.entry[ROB.head].is_branch){
+            mark_non_spec();
+        }
+        if(SHADOW_BUFFER.occupancy != 0 && !SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->is_safe){
+        // if(ROB.entry[ROB.head].instr_id == DEBUG_INSTRUCTION)
+        //     cout << "instr_id in retire_rob: " << ROB.entry[ROB.head].instr_id << "cycle: " << current_core_cycle[0] << endl;
+            forward_merged_packet();
+        }
         // check store instruction
         uint32_t num_store = 0;
         for (uint32_t i=0; i<MAX_INSTR_DESTINATIONS; i++) {
@@ -2889,10 +3165,7 @@ void O3_CPU::retire_rob()
 
 
 
-        //@Sumon: removing shadow casting instrucitons from shadow buffer on completion of execution
-        // calling retire_shadow_buffer here as, shadow buffer points to the same intruction in ROB.
-        // we need to clear shadow buffer before we clear the instruction from ROB
-        retire_shadow_buffer();
+        // retire_shadow_buffer();
 
         ooo_model_instr empty_entry;
         ROB.entry[ROB.head] = empty_entry;

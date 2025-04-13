@@ -585,12 +585,19 @@ void print_deadlock(uint32_t i)
         cout << "[SQ] entry: " << j << " instr_id: " << ooo_cpu[i].SQ.entry[j].instr_id << " address: " << hex << ooo_cpu[i].SQ.entry[j].physical_address << dec << " translated: " << +ooo_cpu[i].SQ.entry[j].translated << " fetched: " << +ooo_cpu[i].SQ.entry[i].fetched << endl;
     }
 
+    cout << endl << "SHADOW BUFFER Entry" << endl;
+    for (uint32_t j=0; j<ooo_cpu[i].SHADOW_BUFFER.SIZE; j++) {
+        if(ooo_cpu[i].SHADOW_BUFFER.entry_pointer[j])
+        cout << "[SHADOW_BUFFER] entry: " << j << " instr_id: " << ooo_cpu[i].SHADOW_BUFFER.entry_pointer[j]->instr_id << " safe: " << ooo_cpu[i].SHADOW_BUFFER.entry_pointer[j]->is_safe << endl;
+    }
+    cout << "HEAD: " << ooo_cpu[i].SHADOW_BUFFER.head << " TAIL: " << ooo_cpu[i].SHADOW_BUFFER.tail << endl;
+
     // print L1D MSHR entry
     PACKET_QUEUE *queue;
     queue = &ooo_cpu[i].L1D.MSHR;
     cout << endl << queue->NAME << " Entry" << endl;
     for (uint32_t j=0; j<queue->SIZE; j++) {
-        cout << "[" << queue->NAME << "] entry: " << j << " instr_id: " << queue->entry[j].instr_id << " rob_index: " << queue->entry[j].rob_index;
+        cout << "[" << queue->NAME << "] entry: " << j << " instr_id: " << queue->entry[j].instr_id << " is_spec " << (unsigned)queue->entry[j].is_speculative << " rob_index: " << queue->entry[j].rob_index;
         cout << " address: " << hex << queue->entry[j].address << " full_addr: " << queue->entry[j].full_addr << dec << " type: " << +queue->entry[j].type;
         cout << " fill_level: " << queue->entry[j].fill_level << " lq_index: " << queue->entry[j].lq_index << " sq_index: " << queue->entry[j].sq_index << endl; 
     }
