@@ -598,8 +598,17 @@ void print_deadlock(uint32_t i)
     cout << endl << queue->NAME << " Entry" << endl;
     for (uint32_t j=0; j<queue->SIZE; j++) {
         cout << "[" << queue->NAME << "] entry: " << j << " instr_id: " << queue->entry[j].instr_id << " is_spec " << (unsigned)queue->entry[j].is_speculative << " rob_index: " << queue->entry[j].rob_index;
-        cout << " address: " << hex << queue->entry[j].address << " full_addr: " << queue->entry[j].full_addr << dec << " type: " << +queue->entry[j].type;
-        cout << " fill_level: " << queue->entry[j].fill_level << " lq_index: " << queue->entry[j].lq_index << " sq_index: " << queue->entry[j].sq_index << endl; 
+        cout << " address: " << hex << queue->entry[j].address << " full_addr: " << queue->entry[j].full_addr << dec << " type: " << +queue->entry[j].type << " YSCI: " << ooo_cpu[i].ROB.entry[queue->entry[j].rob_index].youngest_shadow_casting_instr_id;
+        cout << " fill_level: " << queue->entry[j].fill_level << " lq_index: " << queue->entry[j].lq_index << " sq_index: " << queue->entry[j].sq_index;
+        cout << " merged entries: ";
+        if(queue->entry[j].load_merged){
+            ITERATE_SET(merged, queue->entry[j].lq_index_depend_on_me, LQ_SIZE){
+                cout << ooo_cpu[i].LQ.entry[merged].instr_id << ", ";
+            }
+            cout << endl;
+        }
+        else
+            cout << endl;
     }
 
     queue = &ooo_cpu[i].ITLB.RQ;

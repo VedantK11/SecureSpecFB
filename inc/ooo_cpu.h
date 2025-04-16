@@ -259,7 +259,7 @@ class O3_CPU {
      int prefetch_code_line(uint64_t pf_v_addr);
 
 void fill_btb(uint64_t trigger, uint64_t target);
-void mark_non_spec();
+void mark_non_spec(int);
 void forward_merged_packet();
 void mark_safe(int);
 

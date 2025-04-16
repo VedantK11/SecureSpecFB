@@ -2345,12 +2345,12 @@ void O3_CPU::complete_execution(uint32_t rob_index)
                 // cout << "cycle: " << current_core_cycle[0] << endl;
             if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[rob_index].instr_id == SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id && ROB.entry[rob_index].is_branch)
             {
-                mark_non_spec();
+                mark_non_spec(rob_index);
             }
             else if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[rob_index].instr_id != SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id && ROB.entry[rob_index].is_branch){
                 mark_safe(rob_index);
             }
-            if(SHADOW_BUFFER.occupancy != 0 && !SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->is_safe){
+            if(SHADOW_BUFFER.occupancy != 0 /*&& !SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->is_safe*/){
             // if(ROB.entry[ROB.head].instr_id == DEBUG_INSTRUCTION)
             //     cout << "instr_id in retire_rob: " << ROB.entry[ROB.head].instr_id << "cycle: " << current_core_cycle[0] << endl;
                 forward_merged_packet();
@@ -2393,11 +2393,9 @@ void O3_CPU::complete_execution(uint32_t rob_index)
                     //vedant: code to mark the load as safe
                 }
 
-                if(ROB.entry[rob_index].instr_id == DEBUG_INSTRUCTION)
-                    cout << "reached here2 cycle" << current_core_cycle[0] << endl;
                 if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[rob_index].instr_id == SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id && ROB.entry[rob_index].is_branch)
                 {
-                    mark_non_spec();
+                    mark_non_spec(rob_index);
                 }
                 else if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[rob_index].instr_id != SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id && ROB.entry[rob_index].is_branch){
                     mark_safe(rob_index);
@@ -2409,13 +2407,13 @@ void O3_CPU::complete_execution(uint32_t rob_index)
                 cout << "reached here3 cycle" << current_core_cycle[0] << endl;
             if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[rob_index].instr_id == SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id)
             {
-                mark_non_spec();
+                mark_non_spec(rob_index);
             }
             else if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[rob_index].instr_id != SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id && ROB.entry[rob_index].is_branch){
                 mark_safe(rob_index);
             }
         }
-        if(SHADOW_BUFFER.occupancy != 0 && !SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->is_safe){
+        if(SHADOW_BUFFER.occupancy != 0 /*&& !SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->is_safe*/){
         // if(ROB.entry[ROB.head].instr_id == DEBUG_INSTRUCTION)
         //     cout << "instr_id in retire_rob: " << ROB.entry[ROB.head].instr_id << "cycle: " << current_core_cycle[0] << endl;
             forward_merged_packet();
@@ -2517,15 +2515,14 @@ void O3_CPU::update_rob()
                 complete_execution(i);
         }
     }
-    // else if(inflight_mem_executions ==0 && inflight_reg_executions ==0){
-    //     if(ROB.entry[ROB.head].instr_id == DEBUG_INSTRUCTION)
-    //         cout << "rached here 10, ROB head: " << ROB.entry[ROB.head].instr_id << endl;
-    //     if(ROB.entry[ROB.head].is_memory && ROB.entry[ROB.head].executed == INFLIGHT /*&& ROB.entry[ROB.head].num_mem_ops == 0*/){
-    //         if(ROB.entry[ROB.head].num_mem_ops == 0)
-    //         inflight_mem_executions++;
-    //         complete_execution(ROB.head);
-    //     }
-    // }
+    else if(inflight_mem_executions == 0 && inflight_reg_executions == 0){
+        if(ROB.entry[ROB.head].instr_id == DEBUG_INSTRUCTION)
+            cout << "rached here 10, ROB head: " << ROB.entry[ROB.head].instr_id << "cycle: " << current_core_cycle[0]<< endl;
+        if(ROB.entry[ROB.head].is_memory && ROB.entry[ROB.head].executed == INFLIGHT /*&& ROB.entry[ROB.head].num_mem_ops == 0*/){
+            assert(ROB.entry[ROB.head].num_mem_ops != 0);
+            complete_execution(ROB.head);
+        }
+    }
 }
 
 void O3_CPU::complete_instr_fetch(PACKET_QUEUE *queue, uint8_t is_it_tlb)
@@ -2614,12 +2611,12 @@ void O3_CPU::complete_instr_fetch(PACKET_QUEUE *queue, uint8_t is_it_tlb)
     
 }
 
-void O3_CPU::mark_non_spec()
+void O3_CPU::mark_non_spec(int rob_index)
 {
     int sb_instr_id;
     if(SHADOW_BUFFER.occupancy == 1){
         sb_instr_id = SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id;
-        retire_shadow_buffer(ROB.head);
+        retire_shadow_buffer(rob_index);
         for(int i=0; i<L1D.RQ.SIZE; i++){
             if(L1D.RQ.entry[i].is_speculative && ROB.entry[L1D.RQ.entry[i].rob_index].youngest_shadow_casting_instr_id == sb_instr_id) 
             {
@@ -2639,7 +2636,7 @@ void O3_CPU::mark_non_spec()
         sb_instr_id = SHADOW_BUFFER.entry_pointer[0]->instr_id;
         else
         sb_instr_id = SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head + 1]->instr_id;
-        retire_shadow_buffer(ROB.head);
+        retire_shadow_buffer(rob_index);
         for(int i=0; i<L1D.RQ.SIZE; i++){
             if(L1D.RQ.entry[i].is_speculative && ROB.entry[L1D.RQ.entry[i].rob_index].youngest_shadow_casting_instr_id < sb_instr_id) 
             {
@@ -2703,7 +2700,7 @@ void O3_CPU::forward_merged_packet()
                         assert(0);
                 }
                 else if(ROB.entry[LQ.entry[merged].rob_index].youngest_shadow_casting_instr_id == UINT64_MAX){
-                    L1D.MSHR.entry[i].lq_index_depend_on_me.remove(merged);
+                    L1D.RQ.entry[i].lq_index_depend_on_me.remove(merged);
                     PACKET temp;
                     temp.instr_id = LQ.entry[merged].instr_id;
                     temp.lq_index = merged;
@@ -2722,15 +2719,13 @@ void O3_CPU::forward_merged_packet()
     for(int i=0; i<L1D.MSHR.SIZE; i++){
         if(L1D.MSHR.entry[i].is_speculative)
         {
-            if(ROB.entry[ROB.head].instr_id == DEBUG_INSTRUCTION)
-                cout << "instr_id in retire_rob: " << ROB.entry[ROB.head].instr_id << "cycle: " << current_core_cycle[0] << endl;
-            ITERATE_SET(merged, L1D.MSHR.entry[i].lq_index_depend_on_me, LQ.SIZE){
-                if(ROB.entry[LQ.entry[merged].rob_index].youngest_shadow_casting_instr_id < SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id){
-                    L1D.MSHR.entry[i].lq_index_depend_on_me.remove(merged);
+            ITERATE_SET(merged_new, L1D.MSHR.entry[i].lq_index_depend_on_me, LQ_SIZE){
+                if(ROB.entry[LQ.entry[merged_new].rob_index].youngest_shadow_casting_instr_id < SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id){
+                    L1D.MSHR.entry[i].lq_index_depend_on_me.remove(merged_new);
                     PACKET temp;
-                    temp.instr_id = LQ.entry[merged].instr_id;
-                    temp.lq_index = merged;
-                    temp.rob_index =LQ.entry[merged].rob_index;
+                    temp.instr_id = LQ.entry[merged_new].instr_id;
+                    temp.lq_index = merged_new;
+                    temp.rob_index =LQ.entry[merged_new].rob_index;
                     temp.event_cycle = current_core_cycle[0];
                     // cout << "reached her for id: " <<LQ.entry[merged].instr_id << "rob_index:" << temp.rob_index<< "cycle: " << current_core_cycle[0] << endl;
                     // cout << "num_mem_ops is : " << ROB.entry[temp.rob_index].num_mem_ops << endl;
@@ -2739,12 +2734,12 @@ void O3_CPU::forward_merged_packet()
                     else
                         assert(0);
                 }
-                else if(ROB.entry[LQ.entry[merged].rob_index].youngest_shadow_casting_instr_id == UINT64_MAX){
-                    L1D.MSHR.entry[i].lq_index_depend_on_me.remove(merged);
+                else if(ROB.entry[LQ.entry[merged_new].rob_index].youngest_shadow_casting_instr_id == UINT64_MAX){
+                    L1D.MSHR.entry[i].lq_index_depend_on_me.remove(merged_new);
                     PACKET temp;
-                    temp.instr_id = LQ.entry[merged].instr_id;
-                    temp.lq_index = merged;
-                    temp.rob_index =LQ.entry[merged].rob_index;
+                    temp.instr_id = LQ.entry[merged_new].instr_id;
+                    temp.lq_index = merged_new;
+                    temp.rob_index =LQ.entry[merged_new].rob_index;
                     temp.event_cycle = current_core_cycle[0];
                     // cout << "reached her for id: " <<LQ.entry[merged].instr_id << "rob_index:" << temp.rob_index<< "cycle: " << current_core_cycle[0] << endl;
                     // cout << "num_mem_ops is : " << ROB.entry[temp.rob_index].num_mem_ops << endl;
@@ -3068,15 +3063,15 @@ void O3_CPU::retire_rob()
         }
         if(ROB.entry[ROB.head].instr_id == DEBUG_INSTRUCTION)
             cout << "instr_id in retire_rob: " << ROB.entry[ROB.head].instr_id << "cycle: " << current_core_cycle[0] << endl;
-        if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[ROB.head].instr_id == SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id && ROB.entry[ROB.head].is_branch)
+        if(SHADOW_BUFFER.occupancy != 0 && ROB.entry[ROB.head].instr_id == SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id && SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->is_safe && ROB.entry[ROB.head].is_branch)
         {
-            mark_non_spec();
+            mark_non_spec(ROB.head);
         }
 
-        else if(SHADOW_BUFFER.occupancy != 0 && SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->is_safe && ROB.entry[ROB.head].is_branch){
-            mark_non_spec();
-        }
-        if(SHADOW_BUFFER.occupancy != 0 && !SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->is_safe){
+        // else if(SHADOW_BUFFER.occupancy != 0 && SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->is_safe && ROB.entry[ROB.head].is_branch){
+        //     mark_non_spec();
+        // }
+        if(SHADOW_BUFFER.occupancy != 0 /*&& !SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->is_safe*/){
         // if(ROB.entry[ROB.head].instr_id == DEBUG_INSTRUCTION)
         //     cout << "instr_id in retire_rob: " << ROB.entry[ROB.head].instr_id << "cycle: " << current_core_cycle[0] << endl;
             forward_merged_packet();
