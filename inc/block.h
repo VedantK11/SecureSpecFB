@@ -13,7 +13,8 @@ class BLOCK {
             dirty,
             used,
 	    instruction,
-	    translation;
+	    translation,
+        is_speculative;  //Vedant: Added the flag for identify speculative hit.
 
     int delta,
         depth,
@@ -32,6 +33,7 @@ class BLOCK {
     // replacement state
     uint32_t lru;
 
+
     BLOCK() {
         valid = 0;
         prefetch = 0;
@@ -39,6 +41,7 @@ class BLOCK {
         used = 0;
 	instruction = 0;
 	translation = 0;
+    is_speculative=0;
 
         delta = 0;
         depth = 0;

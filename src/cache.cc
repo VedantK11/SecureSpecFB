@@ -1737,6 +1737,10 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                 }
                 //else if (cache_type == IS_L1D) {
                 else if ((cache_type == IS_L1D) && (RQ.entry[index].type != PREFETCH)) {
+
+                    //Vedant: Copy the information of is_speculative to hit block
+                    block[set][way].is_speculative = RQ.entry[index].is_speculative;
+                    
                     if (PROCESSED.occupancy < PROCESSED.SIZE)
                         PROCESSED.add_queue(&RQ.entry[index]);
                 }

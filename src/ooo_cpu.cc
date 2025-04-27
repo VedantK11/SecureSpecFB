@@ -2630,6 +2630,7 @@ void O3_CPU::mark_non_spec(int rob_index)
                 L1D.update_fill_cycle();
             }
         }  
+        //Vedant: Task to do: Mark the block as safe
     }           
     else{
         if(SHADOW_BUFFER.head == SHADOW_BUFFER.SIZE - 1)
