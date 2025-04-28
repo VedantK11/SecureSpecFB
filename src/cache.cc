@@ -1740,7 +1740,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
 
                     //Vedant: Copy the information of is_speculative to hit block
                     block[set][way].is_speculative = RQ.entry[index].is_speculative;
-                    
+                    block[set][way].rob_index = RQ.entry[index].rob_index;
                     if (PROCESSED.occupancy < PROCESSED.SIZE)
                         PROCESSED.add_queue(&RQ.entry[index]);
                 }
@@ -3227,6 +3227,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
             block[set][way].data = packet->data;
             block[set][way].cpu = packet->cpu;
             block[set][way].instr_id = packet->instr_id;
+            block[set][way].rob_index = packet->rob_index;
 
             DP ( if (warmup_complete[packet->cpu] ) {
                     cout << "[" << NAME << "] " << __func__ << " set: " << set << " way: " << way;

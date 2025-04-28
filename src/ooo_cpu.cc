@@ -2630,12 +2630,16 @@ void O3_CPU::mark_non_spec(int rob_index)
                 L1D.update_fill_cycle();
             }
         }  
-        
+
         //Vedant: Marking the block bit as safe
-        uint32_t set = L1D.get_set( ROB.entry[rob_index].address);
-        int way = L1D.check_hit(& ROB.entry[rob_index]);
-        if(way>=0)
-            L1D.block[set][way].is_speculative = 0;
+        uint32_t set = L1D.get_set( LQ.entry[ROB.entry[rob_index].lq_index].virtual_address>>LOG2_BLOCK_SIZE);
+        int match_way = -1;
+        for (uint32_t way=0; way<L1D.NUM_WAY; way++) {
+            if (L1D.block[set][way].valid && L1D.block[set][way].rob_index == rob_index && L1D.block[set][way].is_speculative == 1) {
+                L1D.block[set][match_way].is_speculative = 0;
+                break;
+            }
+        }
 
     }           
     else{
@@ -2659,10 +2663,14 @@ void O3_CPU::mark_non_spec(int rob_index)
         }
 
         //Vedant: Marking the block bit as safe
-        uint32_t set = L1D.get_set( ROB.entry[rob_index].address);
-        int way = L1D.check_hit(& ROB.entry[rob_index]);
-        if(way>=0)
-            L1D.block[set][way].is_speculative = 0;
+        uint32_t set = L1D.get_set( LQ.entry[ROB.entry[rob_index].lq_index].virtual_address>>LOG2_BLOCK_SIZE);
+        int match_way = -1;
+        for (uint32_t way=0; way<L1D.NUM_WAY; way++) {
+            if (L1D.block[set][way].valid && L1D.block[set][way].rob_index == rob_index && L1D.block[set][way].is_speculative == 1) {
+                L1D.block[set][match_way].is_speculative = 0;
+                break;
+            }
+        }
              
     }
 }
