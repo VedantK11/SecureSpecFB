@@ -4538,7 +4538,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
             int all_spec_flag = 0;
             for (uint32_t i=0; i<MSHR.SIZE; i++) {
 
-                //vedant: Code to check In L1D if the load is safe then only do fill
+                //vedant: Code to check in L1D if the load is safe then only do fill
                 if(cache_type==IS_L1D && MSHR.entry[i].is_speculative)
                 //vedant open if
                 {

@@ -2630,7 +2630,13 @@ void O3_CPU::mark_non_spec(int rob_index)
                 L1D.update_fill_cycle();
             }
         }  
-        //Vedant: Task to do: Mark the block as safe
+        
+        //Vedant: Marking the block bit as safe
+        uint32_t set = L1D.get_set( ROB.entry[rob_index].address);
+        int way = L1D.check_hit(& ROB.entry[rob_index]);
+        if(way>=0)
+            L1D.block[set][way].is_speculative = 0;
+
     }           
     else{
         if(SHADOW_BUFFER.head == SHADOW_BUFFER.SIZE - 1)
@@ -2650,7 +2656,14 @@ void O3_CPU::mark_non_spec(int rob_index)
                 L1D.MSHR.entry[i].is_speculative = 0;
                 L1D.update_fill_cycle();
             }
-        }             
+        }
+
+        //Vedant: Marking the block bit as safe
+        uint32_t set = L1D.get_set( ROB.entry[rob_index].address);
+        int way = L1D.check_hit(& ROB.entry[rob_index]);
+        if(way>=0)
+            L1D.block[set][way].is_speculative = 0;
+             
     }
 }
 
