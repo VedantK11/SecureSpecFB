@@ -43,7 +43,7 @@ class BLOCK {
 	instruction = 0;
 	translation = 0;
     is_speculative=0;
-        rob_index = 0;
+        rob_index = -1;
         delta = 0;
         depth = 0;
         signature = 0;

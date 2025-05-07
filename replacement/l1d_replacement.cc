@@ -10,7 +10,69 @@ void CACHE::l1d_initialize_replacement()
 uint32_t CACHE::l1d_find_victim(uint32_t cpu, uint64_t instr_id, uint32_t set, const BLOCK *current_set, uint64_t ip, uint64_t full_addr, uint32_t type)
 {
     // baseline LRU
-    return lru_victim(cpu, instr_id, set, current_set, ip, full_addr, type); 
+    // return lru_victim(cpu, instr_id, set, current_set, ip, full_addr, type); 
+    
+    uint32_t way = 0;
+
+    // fill invalid line first
+    for (way=0; way<NUM_WAY; way++) {
+        if (block[set][way].valid == false) {
+
+            DP ( if (warmup_complete[cpu]) {
+            cout << "[" << NAME << "] " << __func__ << " instr_id: " << instr_id << " invalid set: " << set << " way: " << way;
+            cout << hex << " address: " << (full_addr>>LOG2_BLOCK_SIZE) << " victim address: " << block[set][way].address << " data: " << block[set][way].data;
+            cout << dec << " lru: " << block[set][way].lru << endl; });
+
+            break;
+        }
+    }
+
+    
+
+    // LRU victim
+    if (way == NUM_WAY) {
+        //Vedant: Find the unsafe blocks and evict them first
+        for (way=0; way<NUM_WAY; way++) {
+            if (block[set][way].is_speculative) {
+                uint32_t victim_lru = block[set][way].lru;
+                //Update/decrease the lru of all blocks and make the victim as lru
+                for (uint32_t upper_way = 0; upper_way < NUM_WAY; upper_way++)
+                {
+                    if (block[set][upper_way].lru > victim_lru)
+                    {
+                        block[set][upper_way].lru--;
+                    }                    
+                }
+                block[set][way].lru = NUM_WAY - 1 ;
+                block[set][way].is_speculative = 0;
+
+                DP ( if (warmup_complete[cpu]) {
+                cout << "[" << NAME << "] " << __func__ << " instr_id: " << instr_id << " replace set: " << set << " way: " << way;
+                cout << hex << " address: " << (full_addr>>LOG2_BLOCK_SIZE) << " victim address: " << block[set][way].address << " data: " << block[set][way].data;
+                cout << dec << " lru: " << block[set][way].lru << endl; });
+                return way;
+            }
+        }
+
+        for (way=0; way<NUM_WAY; way++) {
+            if (block[set][way].lru == NUM_WAY-1) {
+
+                DP ( if (warmup_complete[cpu]) {
+                cout << "[" << NAME << "] " << __func__ << " instr_id: " << instr_id << " replace set: " << set << " way: " << way;
+                cout << hex << " address: " << (full_addr>>LOG2_BLOCK_SIZE) << " victim address: " << block[set][way].address << " data: " << block[set][way].data;
+                cout << dec << " lru: " << block[set][way].lru << endl; });
+
+                break;
+            }
+        }
+    }
+
+    if (way == NUM_WAY) {
+        cerr << "[" << NAME << "] " << __func__ << " no victim! set: " << set << endl;
+        assert(0);
+    }
+
+    return way;
 }
 
 // called on every cache hit and cache fill

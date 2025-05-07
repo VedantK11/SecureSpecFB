@@ -2632,15 +2632,14 @@ void O3_CPU::mark_non_spec(int rob_index)
         }  
 
         //Vedant: Marking the block bit as safe
-        uint32_t set = L1D.get_set( LQ.entry[ROB.entry[rob_index].lq_index].virtual_address>>LOG2_BLOCK_SIZE);
         int match_way = -1;
-        for (uint32_t way=0; way<L1D.NUM_WAY; way++) {
-            if (L1D.block[set][way].valid && L1D.block[set][way].rob_index == rob_index && L1D.block[set][way].is_speculative == 1) {
-                L1D.block[set][match_way].is_speculative = 0;
-                break;
+        for(uint32_t set=0; set<L1D.NUM_SET; set++){
+            for (uint32_t way=0; way<L1D.NUM_WAY; way++) {
+                if (L1D.block[set][way].valid && L1D.block[set][way].is_speculative && ROB.entry[L1D.block[set][way].rob_index].youngest_shadow_casting_instr_id < sb_instr_id) {
+                    L1D.block[set][way].is_speculative = 0;
+                }
             }
         }
-
     }           
     else{
         if(SHADOW_BUFFER.head == SHADOW_BUFFER.SIZE - 1)
@@ -2663,15 +2662,14 @@ void O3_CPU::mark_non_spec(int rob_index)
         }
 
         //Vedant: Marking the block bit as safe
-        uint32_t set = L1D.get_set( LQ.entry[ROB.entry[rob_index].lq_index].virtual_address>>LOG2_BLOCK_SIZE);
         int match_way = -1;
-        for (uint32_t way=0; way<L1D.NUM_WAY; way++) {
-            if (L1D.block[set][way].valid && L1D.block[set][way].rob_index == rob_index && L1D.block[set][way].is_speculative == 1) {
-                L1D.block[set][match_way].is_speculative = 0;
-                break;
+        for(uint32_t set=0; set<L1D.NUM_SET; set++){
+            for (uint32_t way=0; way<L1D.NUM_WAY; way++) {
+                if (L1D.block[set][way].valid && L1D.block[set][way].is_speculative && ROB.entry[L1D.block[set][way].rob_index].youngest_shadow_casting_instr_id < sb_instr_id) {
+                    L1D.block[set][way].is_speculative = 0;
+                }
             }
         }
-             
     }
 }
 
@@ -2706,7 +2704,7 @@ void O3_CPU::forward_merged_packet()
     for(int i=0; i<L1D.RQ.SIZE; i++){
         if(L1D.RQ.entry[i].is_speculative)
         {
-            ITERATE_SET(merged, L1D.RQ.entry[i].lq_index_depend_on_me, LQ_SIZE){
+            ITERATE_SET(merged, L1D.RQ.entry[i].lq_index_depend_on_me, LQ.SIZE){
                 if(ROB.entry[LQ.entry[merged].rob_index].youngest_shadow_casting_instr_id < SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id){
                     L1D.RQ.entry[i].lq_index_depend_on_me.remove(merged);
                     PACKET temp;
@@ -2741,13 +2739,13 @@ void O3_CPU::forward_merged_packet()
     for(int i=0; i<L1D.MSHR.SIZE; i++){
         if(L1D.MSHR.entry[i].is_speculative)
         {
-            ITERATE_SET(merged_new, L1D.MSHR.entry[i].lq_index_depend_on_me, LQ_SIZE){
-                if(ROB.entry[LQ.entry[merged_new].rob_index].youngest_shadow_casting_instr_id < SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id){
-                    L1D.MSHR.entry[i].lq_index_depend_on_me.remove(merged_new);
+            ITERATE_SET(merged, L1D.MSHR.entry[i].lq_index_depend_on_me, LQ.SIZE){
+                if(ROB.entry[LQ.entry[merged].rob_index].youngest_shadow_casting_instr_id < SHADOW_BUFFER.entry_pointer[SHADOW_BUFFER.head]->instr_id){
+                    L1D.MSHR.entry[i].lq_index_depend_on_me.remove(merged);
                     PACKET temp;
-                    temp.instr_id = LQ.entry[merged_new].instr_id;
-                    temp.lq_index = merged_new;
-                    temp.rob_index =LQ.entry[merged_new].rob_index;
+                    temp.instr_id = LQ.entry[merged].instr_id;
+                    temp.lq_index = merged;
+                    temp.rob_index =LQ.entry[merged].rob_index;
                     temp.event_cycle = current_core_cycle[0];
                     // cout << "reached her for id: " <<LQ.entry[merged].instr_id << "rob_index:" << temp.rob_index<< "cycle: " << current_core_cycle[0] << endl;
                     // cout << "num_mem_ops is : " << ROB.entry[temp.rob_index].num_mem_ops << endl;
@@ -2756,12 +2754,12 @@ void O3_CPU::forward_merged_packet()
                     else
                         assert(0);
                 }
-                else if(ROB.entry[LQ.entry[merged_new].rob_index].youngest_shadow_casting_instr_id == UINT64_MAX){
-                    L1D.MSHR.entry[i].lq_index_depend_on_me.remove(merged_new);
+                else if(ROB.entry[LQ.entry[merged].rob_index].youngest_shadow_casting_instr_id == UINT64_MAX){
+                    L1D.MSHR.entry[i].lq_index_depend_on_me.remove(merged);
                     PACKET temp;
-                    temp.instr_id = LQ.entry[merged_new].instr_id;
-                    temp.lq_index = merged_new;
-                    temp.rob_index =LQ.entry[merged_new].rob_index;
+                    temp.instr_id = LQ.entry[merged].instr_id;
+                    temp.lq_index = merged;
+                    temp.rob_index =LQ.entry[merged].rob_index;
                     temp.event_cycle = current_core_cycle[0];
                     // cout << "reached her for id: " <<LQ.entry[merged].instr_id << "rob_index:" << temp.rob_index<< "cycle: " << current_core_cycle[0] << endl;
                     // cout << "num_mem_ops is : " << ROB.entry[temp.rob_index].num_mem_ops << endl;
@@ -2847,7 +2845,7 @@ void O3_CPU::complete_data_fetch(PACKET_QUEUE *queue, uint8_t is_it_tlb)
     else { // L1D
 
         if(ROB.entry[rob_index].instr_id == DEBUG_INSTRUCTION)
-            cout << "num_mem_ops are: " << ROB.entry[rob_index].num_mem_ops << endl;
+            cout << "num_mem_ops are: " << ROB.entry[rob_index].num_mem_ops << " current cycle: " << current_core_cycle[0] << endl;
         if (queue->entry[index].type == RFO)
             handle_merged_load(&queue->entry[index]);
         else { 
@@ -3030,11 +3028,12 @@ void O3_CPU::handle_merged_load(PACKET *provider)
 {
     ITERATE_SET(merged, provider->lq_index_depend_on_me, LQ.SIZE) {
         uint32_t merged_rob_index = LQ.entry[merged].rob_index;
-
+        if(provider->instr_id == DEBUG_INSTRUCTION)
+            cout << "Provider: " << provider->instr_id << "'s dependent: " << LQ.entry[merged].instr_id << " is getting handled here" << endl;
         LQ.entry[merged].fetched = COMPLETED;
         LQ.entry[merged].event_cycle = current_core_cycle[cpu];
      
-	ROB.entry[merged_rob_index].num_mem_ops--;
+        ROB.entry[merged_rob_index].num_mem_ops--;
         ROB.entry[merged_rob_index].event_cycle = current_core_cycle[cpu];
 
 #ifdef SANITY_CHECK

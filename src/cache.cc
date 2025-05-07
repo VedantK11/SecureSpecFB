@@ -724,7 +724,8 @@ void CACHE::handle_fill()
             }
             else if ((cache_type == IS_L1D) && (MSHR.entry[mshr_index].type != PREFETCH)) {
 #ifndef PRACTICAL_PERFECT_L1D
-                if (PROCESSED.occupancy < PROCESSED.SIZE)	//Neelu: Commenting for ideal L1 prefetcher i.e. not sending to processed queue
+                assert(MSHR.entry[mshr_index].is_speculative == false);
+                if (PROCESSED.occupancy < PROCESSED.SIZE)	        //Neelu: Commenting for ideal L1 prefetcher i.e. not sending to processed queue
                     PROCESSED.add_queue(&MSHR.entry[mshr_index]);
 #endif
             }
@@ -1739,8 +1740,10 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                 else if ((cache_type == IS_L1D) && (RQ.entry[index].type != PREFETCH)) {
 
                     //Vedant: Copy the information of is_speculative to hit block
-                    block[set][way].is_speculative = RQ.entry[index].is_speculative;
-                    block[set][way].rob_index = RQ.entry[index].rob_index;
+                    if(RQ.entry[index].is_speculative){
+                        block[set][way].is_speculative = RQ.entry[index].is_speculative;
+                        block[set][way].rob_index = RQ.entry[index].rob_index;
+                    }
                     if (PROCESSED.occupancy < PROCESSED.SIZE)
                         PROCESSED.add_queue(&RQ.entry[index]);
                 }
@@ -4543,16 +4546,16 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                 if(cache_type==IS_L1D && MSHR.entry[i].is_speculative)
                 //vedant open if
                 {
-                        if(MSHR.entry[i].instr_id == DEBUG_INSTRUCTION && MSHR.entry[i].instruction == INSTRUCTION){
-                            for(int j = 0; j < ooo_cpu[0].L1D.MSHR.SIZE; j++){
-                                cout << "index: " << j << " entry: " << ooo_cpu[0].L1D.MSHR.entry[j].instr_id << " is_spec: " << (unsigned)MSHR.entry[j].is_speculative << endl;
-                                cout << "merged entries:" << endl;
-                                ITERATE_SET(merged, ooo_cpu[0].L1D.MSHR.entry[j].lq_index_depend_on_me, LQ_SIZE){
-                                    cout << ooo_cpu[0].LQ.entry[merged].instr_id << ", ";
-                                }
-                                cout << endl;
+                    if(MSHR.entry[i].instr_id == DEBUG_INSTRUCTION && MSHR.entry[i].instruction == INSTRUCTION){
+                        for(int j = 0; j < ooo_cpu[0].L1D.MSHR.SIZE; j++){
+                            cout << "L1D MSHR index: " << j << " entry: " << ooo_cpu[0].L1D.MSHR.entry[j].instr_id << " is_spec: " << (unsigned)MSHR.entry[j].is_speculative << " cycle: " << current_core_cycle[0] << endl;
+                            cout << "merged entries:" << endl;
+                            ITERATE_SET(merged, ooo_cpu[0].L1D.MSHR.entry[j].lq_index_depend_on_me, LQ_SIZE){
+                                cout << ooo_cpu[0].LQ.entry[merged].instr_id << ", ";
                             }
+                            cout << endl;
                         }
+                    }
                     continue;
                     all_spec_flag = 1;
 
@@ -4562,7 +4565,7 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                     if ((MSHR.entry[i].returned == COMPLETED) && (MSHR.entry[i].event_cycle < min_cycle)) {
                         if(MSHR.entry[i].instr_id == DEBUG_INSTRUCTION && MSHR.entry[i].instruction == INSTRUCTION){
                             for(int j = 0; j < ooo_cpu[0].L1D.MSHR.SIZE; j++)
-                                cout << "index: " << j << " entry: " << ooo_cpu[0].L1D.MSHR.entry[j].instr_id << " is_spec: " << (unsigned)MSHR.entry[j].is_speculative << endl;
+                                cout << "L1D MSHR index: " << j << " entry: " << ooo_cpu[0].L1D.MSHR.entry[j].instr_id << " is_spec: " << (unsigned)MSHR.entry[j].is_speculative  << " cycle: " << current_core_cycle[0] << endl;
                         }
                         all_spec_flag = 0;
                         min_cycle = MSHR.entry[i].event_cycle;
@@ -4586,8 +4589,10 @@ if((cache_type == IS_L1I || cache_type == IS_L1D) && reads_ready.size() == 0)
                 return;
             MSHR.next_fill_cycle = min_cycle;
             MSHR.next_fill_index = min_index;
-            //naman nish
-                if(MSHR.entry[MSHR.next_fill_index].instr_id == DEBUG_INSTRUCTION && MSHR.entry[MSHR.next_fill_index].instruction == INSTRUCTION)
+            if(cache_type == IS_L1D)
+                assert(MSHR.entry[MSHR.next_fill_index].is_speculative == false);
+            //naman 
+            if(MSHR.entry[MSHR.next_fill_index].instr_id == DEBUG_INSTRUCTION && MSHR.entry[MSHR.next_fill_index].instruction == INSTRUCTION)
             {
                 cout<<"MSHR next_fill_index " << MSHR.next_fill_index << " instr_id: " << MSHR.entry[MSHR.next_fill_index].instr_id << endl;
             }

@@ -19,7 +19,7 @@
 
 // tuned empirically
 
-#define SMALL_SIZE	13
+#define SMALL_SIZE	18
 #define SMALLER_SIZE	6
 
 class fastset {
