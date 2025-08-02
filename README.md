@@ -124,3 +124,6 @@ bin/champsim --warmup_instructions 500000000 --simulation_instructions 500000000
 ## License and Usage
 
 This project extends the [ChampSim](https://github.com/ChampSim/ChampSim) simulator for academic research purposes. 
+
+## Authors
+All the authors have contributed equally in this project
